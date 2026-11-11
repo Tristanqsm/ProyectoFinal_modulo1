@@ -1,0 +1,16 @@
+Usuario: appuser              UID: 1002     GID: 1002
+Usuario: webadmin             UID: 1003     GID: 1003
+Usuario: dev01                UID: 1004     GID: 1004
+Usuario: dev02                UID: 1005     GID: 1005
+Usuario: tempcontractor       UID: 1006     GID: 1006
+Usuario: monitoring           UID: 1007     GID: 1007
+Usuario: dbadmin              UID: 1008     GID: 1008
+Usuario: ciuser               UID: 1009     GID: 1009
+Usuario: secaudit             UID: 1010     GID: 1010
+Usuario: backupsvc            UID: 1011     GID: 1011
+Usuario: deployer             UID: 1012     GID: 1012
+Usuario: contractor01         UID: 1013     GID: 1013
+Usuario: ftpuser              UID: 1014     GID: 1014
+Usuario: jenkins              UID: 1015     GID: 1015
+Usuario: logger               UID: 1016     GID: 1016
+Usuario: scanner              UID: 1017     GID: 1017
