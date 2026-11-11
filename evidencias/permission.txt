@@ -1,0 +1,17 @@
+Para asignar los permisos, decidi separar los archivos en 3 tipos:
+
+1. DIRECTORIOS
+   - Permiso asignado: 700 (rwx------)
+   - Se le aplicara a: sec_guard/, capturas/, preparados/, fuentes/, scripts/, resultados/, evidencias/
+El motivo por el que decidi dar estos permisos a los directorios es para otorgar acceso total (lectura, escritura y navegación) únicamente al propietario y asi evita que usuarios no autorizados o miembros del grupo puedan listar o alterar  la estructura de carpetas del proyecto.
+
+2. SCRIPTS
+   - Permiso asignado: 700 (rwx------)
+   - Se le aplicara a : scripts/capturar.sh, scripts/normalizar.sh, scripts/ejecutar.sh
+El motivo por el que elegi estos permisos es para garantiza que solo el propietario pueda ejecutar losscripts que se encargaran de hacer la recolección y análisis, de esta forma, considero que se previenen ejecuciones no deseadas o modificaciones del código.
+
+3. ARCHIVOS DE DATOS, FUENTES Y REPORTES
+   - Permiso asignado: 600 (rw-------)
+   - Se le aplicara a: capturas/*.log, preparados/*.txt, fuentes/*.c, resultados/*.txt, evidencias/*.txt
+El motivo de estos permisos es para permitir la lectura y escritura unicamente al propietario, asi negamos la ejecución
+por seguridad y se restringe la lectura/escritura a otros usuarios para mantener la integridad de las mediciones y la auditoría.

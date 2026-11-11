@@ -1,0 +1,2 @@
+16777230 31516764 -rw-r--r-- 2 qesensinu staff 0 150 "Nov 10 23:36:24 2026" "Nov 10 23:36:12 2026" "Nov 10 23:36:22 2026" "Nov 10 23:36:12 2026" 4096 8 0 evidencias/pruebas/prueba_renombrado.txt
+16777230 31516764 -rw-r--r-- 2 qesensinu staff 0 150 "Nov 10 23:36:24 2026" "Nov 10 23:36:12 2026" "Nov 10 23:36:22 2026" "Nov 10 23:36:12 2026" 4096 8 0 evidencias/pruebas/hardlink.txt
