@@ -23,14 +23,11 @@ typedef struct {
   int max;
   double promedio;
   int alertas;
-  int umbral;
-  int es_alerta_estricta; // 1 si > threshold, 0 si >= threshold
 } ResumenCategoria;
 
 // FUNCIONES
 // FUNCION PARA INICIALIZAR LAS VARIABLES DEL RESUMEN
-void inicializar_resumen(ResumenCategoria *res, const char *nombre,
-                         int threshold, int es_estricta) {
+void inicializar_resumen(ResumenCategoria *res, const char *nombre) {
   strncpy(res->nombre, nombre, sizeof(res->nombre) - 1);
   res->nombre[sizeof(res->nombre) - 1] = '\0';
   res->cantidad = 0;
@@ -39,8 +36,6 @@ void inicializar_resumen(ResumenCategoria *res, const char *nombre,
   res->max = 0;
   res->promedio = 0.0;
   res->alertas = 0;
-  res->umbral = threshold;
-  res->es_alerta_estricta = es_estricta;
 }
 
 // ACTUALIZA LOS DATOS DE LA CATEGORÍA
@@ -57,14 +52,16 @@ void actualizar_categoria(ResumenCategoria *res, int valor) {
   res->cantidad++;
   res->suma += valor;
 
-  if (res->es_alerta_estricta) {
-    if (valor > res->umbral)
-      res->alertas++;
-  } else {
-    if (valor >= res->umbral)
-      res->alertas++;
+  // Evaluación directa de condiciones de alerta por categoría
+  if (strcmp(res->nombre, CAT_DISCO) == 0 && valor >= 80) {
+    res->alertas++;
+  } else if (strcmp(res->nombre, CAT_PROCESOS) == 0 && valor >= 30) {
+    res->alertas++;
+  } else if (strcmp(res->nombre, CAT_PERMISOS) == 0 && valor > 0) {
+    res->alertas++;
   }
 }
+
 // FUNCIÓN DE VALIDACIÓN
 int validar_intervalo(const char *cat, int valor) {
   if (strcmp(cat, CAT_DISCO) == 0)
@@ -166,9 +163,9 @@ int main(int argc, char *argv[]) {
 
   // INICIALIZAR LAS VARIABLES DE LOS RESUMENES:
   ResumenCategoria res_disco, res_procesos, res_permisos;
-  inicializar_resumen(&res_disco, CAT_DISCO, 80, 0);       // DISCO >= 80
-  inicializar_resumen(&res_procesos, CAT_PROCESOS, 30, 0); // PROCESOS >= 30
-  inicializar_resumen(&res_permisos, CAT_PERMISOS, 0, 1);  // PERMISOS > 0
+  inicializar_resumen(&res_disco, CAT_DISCO);
+  inicializar_resumen(&res_procesos, CAT_PROCESOS);
+  inicializar_resumen(&res_permisos, CAT_PERMISOS);
 
   for (int i = 0; i < registros_leidos; i++) {
     if (strcmp(mediciones[i].categoria, CAT_DISCO) == 0) {
@@ -194,6 +191,7 @@ int main(int argc, char *argv[]) {
     return 7;
   }
 
+  // ESCRIBIR EL INFORME
   fprintf(fout, "INFORME DE MONITOREO\n");
   fprintf(fout, "Etiqueta: %s\n", etiqueta);
   fprintf(fout, "Registros: %d\n", registros_leidos);
@@ -217,7 +215,7 @@ int main(int argc, char *argv[]) {
       res_disco.alertas + res_procesos.alertas + res_permisos.alertas;
   fprintf(fout, "Observaciones que cumplen condiciones de alerta: %d.\n",
           total_alertas);
-  fprintf(fout, "Umbrales utilizados.\n");
+  fprintf(fout, "Umbrales utilizados con fines didacticos.\n");
 
   fclose(fout);
   free(mediciones);
