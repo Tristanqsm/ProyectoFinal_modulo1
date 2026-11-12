@@ -11,7 +11,7 @@ if [[ ! -f "$Dir_telemetria" ]]; then
     exit 1
 fi
 
-Registros_tmp =$(mktemp)
+Registros_tmp=$(mktemp)
 awk '{print $(NF-1), $NF}' "$Dir_telemetria" > "$Registros_tmp "
 Total_registros=$(wc -l < "$Registros_tmp " | tr -d ' ')
 
