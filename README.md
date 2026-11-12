@@ -5,7 +5,7 @@ Este README servira para justificar lo realizado en cada etapa del proyecto al c
 ---
 
 ### ETAPA 1: 
-**Comandos usados:**
+**Desarrollo:**
 1. Organizar el proyecto.
 El primer paso de este proyecto es crear la carpeta principal llamada sec_guard y dentro de ella crear las siguientes subcarpetas:
 capturas/: registros originales.
@@ -89,7 +89,7 @@ Número de Inodo y Tamaño: Verifican la identidad de los datos y detectar modif
 
 ---
 ### ETAPA 2:
-**Comandos usados:**
+**Desarrollo:**
 1. Validar la existencia e integridad de paquete_auditoria.tar.gz, extraer su contenido y validar la existencia de al menos 3 archivos.
 Como primer paso fue descargar el archivo comprimido y moverlo a la carpeta de capturas/estáticos.
 Una vez realizado lo anterior, coloque los siguientes comandos para validar y descomprimir el archivo comprimido:
@@ -116,11 +116,11 @@ Extraer conexiones SYN de net_traffic.log -> preparados/conexiones_syn.txt
 Para realizar esto es importante revisar la estructura del archivo net_traffic.log, al analizarlo pude notar que las direcciones IP y puerto de origen estan en la columna 2, mientras que las de destino estan en la columna 3 por lo que puedo usar un awk para imprimir solo esas columnas. Ya solo por ultimo use un grep para solo seleccionar las lineas que hagan referencia a una peticion TCP, que son aquellas que tienen Flags [S], por lo que filtre con grep solo aquellas lineas que tengan este patron en ellas. Al final el comando y el archivo conexiones_syn.txt quedaron de la siguiente manera:
 ```bash
 grep "Flags \[S\]" capturas/estaticos/net_traffic.log | awk '{
-    split($3, origen, ".");
-    split($5, destino, ".");
-    ip_origen=origen[1]"."origen[2]"."origen[3]"."origen[4]; port_origen=origen[5];
+    split($2, origen, ".");
+    split($4, destino, ".");
+    ip_origen =origen[1] "." origen[2] "." origen[3] "." origen[4]; port_origen=origen[5];
     ip_destino=destino[1]"."destino[2]"."destino[3]"."destino[4]; port_destino=destino[5];
-    print ip_origen ":" port_origen " -> " ip_destino ":" port_destino;
+    print "ORIGEN: " ip_origen ":" port_origen "   ->   DESTINO: " ip_destino ":" port_destino;
 }' > preparados/conexiones_syn.txt
 ```
 
@@ -142,5 +142,79 @@ Utilice la función split() de awk y especifique que se usara el punto como deli
 
 ---
 ### ETAPA 3:
-**Comandos usados:**
+**Desarrollo:**
+1. Diseñar las estructuras.
+Para la estructura de Medicion decidi dejar fijo la categoria con un tamaño de 16 y que esta tambien tenga el atributo para guardar el valor de la categoria. Por otra parte, para la estructura de ResumenCategoria decidi dejar el mismo valor para el nombre de la categoria (en 16), ademas agregue atributos que puedan ayudar a realizar el resumen de la categoria como la cantidad, la suma, el minimo, el maximo, el promedio, las alertas y el umbral.
+```bash
+typedef struct {
+  char categoria[16];
+  int valor;
+} Medicion;
+
+typedef struct {
+  char nombre[16];
+  int cantidad;
+  long suma;
+  int min;
+  int max;
+  double promedio;
+  int alertas;
+  int umbral ;
+  int es_alerta_estricta; // 1 si > threshold, 0 si >= threshold
+} ResumenCategoria;
+```
+
+2. Leer y validar la entrada.
+Se validaron tanto los metadatos del encabezado como cada registro individual para prevenir que el buffer se desborde  y rechazar archivos corruptos, truncados o manipulados antes de hacer el calculo del resumen de las categorias. Todo esto se encuentra definido en la funcion principal, donde primero se busca que el archivo abra correctamente, luego que se pueda leer la etiqueta de identificacion, luego que se lea correctamente la cantidad de registros y despues que esta cantidad se encuentre en el intervalo de 0 a 200, luego que la asignacion de la memoria dinamica se haga correctamente, que el archivo no tenga mas registros de los que se declararon, que el valor este dentro del rango y luego que se lean todos los registros.
+
+3. Reservar y utilizar memoria.
+Como la cantidad de mediciones varía entre 0 y 200 en cada ejecución, la memoria dinámica evita desperdiciar espacio fijo y permite manejar archivos vacíos de cero registros sin fallar al intentar reservar 0 bytes. Para todo este proceso de la memoria dinamica estuve utilizando malloc para la creacion de la estructura de Medicion, sin embargo ya no quise usar malloc para hacer dinamico el tamaño de las categorias para evitar esos bucles de memoria.
+```bash
+Medicion *mediciones = NULL;
+  if (cantidad_declarada > 0) {
+    mediciones = (Medicion *)malloc(cantidad_declarada * sizeof(Medicion));
+    if (!mediciones) { ... }
+  }
+```
+
+4. Procesar por categoría.
+Para el proceso de las categorias me di cuenta que seria mas eficiente crear una funcion para cada categoria, de esta manera me aseguro de que cada una se procese por separado y ademas puedo inicializar min y max con el primer valor real de esa categoria.
+```bash
+ResumenCategoria res_disco, res_procesos, res_permisos;
+  inicializar_resumen(&res_disco, CAT_DISCO, 80, 0);
+  inicializar_resumen(&res_procesos, CAT_PROCESOS, 30, 0);
+  inicializar_resumen(&res_permisos, CAT_PERMISOS, 0, 1);
+```
+5. Escribir y finalizar correctamente.
+Me encargue de hacer la apertura del archivo de salida antes de escribir y la invocación de fclose() y free() en todas las rutas de ejecución para evitar fugas de memoria.
+```bash
+if (!validar_intervalo(cat_buffer, val_buffer)) {
+      fprintf(stderr, "Error: Valor fuera de rango para %s: %d\n", cat_buffer,
+              val_buffer);
+-->   free(mediciones);
+-->   fclose(fin);
+      return 5;
+    }
+
+-->  fclose(fout);
+-->  free(mediciones);
+  return 0;
+```
+
+
+**Cuestionario:**
+- ¿Qué diferencia existe entre almacenar una medición y almacenar el resumen de una categoría?
+Almacenar una medición guarda una observación individual atómica tal como ocurrió en un instante (categoría y valor). Almacenar el resumen guarda métricas estadísticas calculadas a partir de todas las observaciones agrupadas de esa categoría (cantidad, suma, mínimo, máximo, promedio y alertas).
+
+- ¿Cómo evitarán una división entre cero o utilizar un mínimo que todavía no se ha inicializado?
+La división entre cero se evita verificando explícitamente if (res.cantidad > 0) antes de calcular suma / cantidad (si es 0, se reporta "Sin datos"). El mínimo no inicializado se evita asignándole el valor de la primera medición válida de esa categoría (if (res.cantidad == 0) { res.min = valor; res.max = valor; }), en lugar de usar constantes arbitrarias.
+
+- Si ocurre un error después de reservar memoria y abrir un archivo, ¿qué recursos deben liberar o cerrar?
+Se debe liberar la memoria dinámica asignada en el heap mediante free(mediciones) y cerrar todo flujo de archivo abierto mediante fclose(fin) y/o fclose(fout) antes de retornar el código de error del programa.
+
+---
+### ETAPA 4:
+**Desarrollo**
+
+
 **Cuestionario:**
