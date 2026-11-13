@@ -1,0 +1,58 @@
+Comando: sleep 300 &
+- Justificación: El comando 'sleep' permanece en estado de reposo (bloqueado en espera
+  de temporizador del kernel), con consumo de CPU del 0.0% y consumo de memoria del 0.0%.
+  No realiza operaciones de E/S en disco ni genera tráfico de red.
+
+* SECUENCIA DE EJECUCIÓN Y REGISTRO DE EVIDENCIAS
+Comando ejecutado:
+    sleep 300 &
+    PID_PRUEBA=$!
+
+Resultado:
+    PID asignado: 22036
+    PPID (Proceso padre): 22031
+
+* INSPECCIÓN DEL ESTADO INICIAL
+Comando ejecutado:
+    ps -o pid,ppid,stat,pcpu,pmem,command -p 22036
+
+Salida obtenida:
+  PID  PPID STAT  %CPU %MEM COMMAND
+22036 22031 S+     0.0  0.0 sleep 300
+
+
+* SUSPENSIÓN CONTROLADA (SIGSTOP)
+Comando ejecutado:
+    kill -STOP 22036
+
+Verificación de estado posterior:
+    ps -o pid,ppid,stat,pcpu,pmem,command -p 22036
+
+Salida obtenida:
+  PID  PPID STAT  %CPU %MEM COMMAND
+22036 22031 T+     0.0  0.0 sleep 300
+
+
+* REANUDACIÓN CONTROLADA (SIGCONT)
+Comando ejecutado:
+    kill -CONT 22036
+
+Verificación de estado posterior:
+    ps -o pid,ppid,stat,pcpu,pmem,command -p 22036
+
+Salida obtenida:
+  PID  PPID STAT  %CPU %MEM COMMAND
+22036 22031 S+     0.0  0.0 sleep 300
+
+
+* TERMINACIÓN CONTROLADA (SIGTERM)
+Comando ejecutado:
+    kill -TERM 22036
+    wait 22036 2>/dev/null || true
+
+Verificación de terminación en la tabla de procesos:
+    ps -p 22036
+
+Salida obtenida:
+    CONFIRMACIÓN: El proceso 22036 ha finalizado correctamente.
+    No figura en la tabla de procesos del sistema operativo.

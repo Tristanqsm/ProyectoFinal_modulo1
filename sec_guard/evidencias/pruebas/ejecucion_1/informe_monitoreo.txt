@@ -1,0 +1,26 @@
+INFORME DE MONITOREO
+Etiqueta: AuditoriaCursoC
+Registros: 6
+Categoria DISCO
+- Cantidad: 2
+- Suma: 192
+- Minimo: 96
+- Maximo: 96
+- Promedio: 96.00
+- Alertas: 2
+Categoria PROCESOS
+- Cantidad: 2
+- Suma: 781
+- Minimo: 390
+- Maximo: 391
+- Promedio: 390.50
+- Alertas: 2
+Categoria PERMISOS
+- Cantidad: 2
+- Suma: 0
+- Minimo: 0
+- Maximo: 0
+- Promedio: 0.00
+- Alertas: 0
+Observaciones que cumplen condiciones de alerta: 4.
+Umbrales utilizados con fines didacticos.

@@ -12,14 +12,14 @@ if [[ ! -f "$Dir_telemetria" ]]; then
 fi
 
 Registros_tmp=$(mktemp)
-awk '{print $(NF-1), $NF}' "$Dir_telemetria" > "$Registros_tmp "
-Total_registros=$(wc -l < "$Registros_tmp " | tr -d ' ')
+awk '{print $(NF-1), $NF}' "$Dir_telemetria" > "$Registros_tmp"
+Total_registros=$(wc -l < "$Registros_tmp" | tr -d ' ')
 
 {
     echo "$Etiqueta"
     echo "$Total_registros"
-    cat "$Registros_tmp "
+    cat "$Registros_tmp"
 } > "$Dir_preparados"
 
-rm -f "$Registros_tmp "
+rm -f "$Registros_tmp"
 echo "Archivo normalizado generado en $Dir_preparados ($Total_registros registros)."

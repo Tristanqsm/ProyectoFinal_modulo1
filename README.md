@@ -214,7 +214,57 @@ Se debe liberar la memoria dinámica asignada en el heap mediante free(medicione
 
 ---
 ### ETAPA 4:
-**Desarrollo**
+**Desarrollo:**
+1. Orquestación del flujo automatizado en `ejecutar.sh`:
+Se diseñó un script orquestador encargado de coordinar de forma no interactiva toda la secuencia de operaciones del proyecto:
+- **Limpieza preventiva:** Antes de iniciar cualquier procesamiento, el script elimina informes en `resultados/`, binarios previos en `fuentes/` y archivos intermedios en `preparados/` para evitar que una ejecución con fallos entregue resultados de alguna otra ejecucion.
+- **Validación del archivo .tar:** Primero comprobamos que exista  `capturas/estaticos/paquete_auditoria.tar.gz` mediante `-f` asi como su contenido con `tar -tzf ... > /dev/null`. Si ambas validaciones resultan exitosas es cuando ya se puede descomprimir con `tar -zxf ... -C capturas/estaticos/` y se verifica que esten los tres archivos requeridos (`sshd_config`, `secure.log` y `net_traffic.log`).
+- **Auditoría de archivos estáticos:** Se ejecutan las transformaciones de los archivos descomprimidos usando los comandos `sed`, `grep`, `awk` y enviandolos hacia `preparados/`, ademas para que comprobar que cada ejecucion si se realizo, se evalua que cada pipeline retorne código 0 y genere archivos no vacíos.
+- **Compilación controlada:** Se compila `fuentes/sec_engine.c`, si el compilador detecta errores el script aborta de inmediato con un `stderr`, asi hacemos que no se ejecute el archivo binario.
+- **Captura y normalización dinámica:** Se ejecutan los scripts de `scripts/capturar.sh` y `scripts/normalizar.sh`, verificando sus códigos de salida y comprobando que `preparados/mediciones_sec.txt` se haya creado y tenga el contenido que esperamos.
+- **Ejecución del analizador:** Se ejecuta el archivo binario `fuentes/sec_engine` con el archivo normalizado y se valida que el informe final se genere exitosamente en `resultados/informe_monitoreo.txt`.
+
+2. Observación y administración de proceso propio:
+Se ejecutó un proceso auxiliar de bajo impacto en segundo plano con `sleep 300 &`, para capturar su identificador con `$!` y se documentó su ciclo de vida en `evidencias/pruebas/admin_process.txt`:
+- Consulta de estado inicial mediante `ps`: Estado `S+` (Interruptible Sleep), consumo de CPU y memoria al 0.0%.
+- Suspensión controlada: Envío de señal `SIGSTOP` (`kill -STOP 22036`), su estado cambió a `T+`.
+- Reanudación controlada: Envío de señal `SIGCONT` (`kill -CONT 22036`), regresa al estado `S+`.
+- Terminación controlada: Envío de señal `SIGTERM` (`kill -TERM 22036`), el PID ya no aparece en la tabla de procesos.
+
+3. Repetición del proyecto y reproducibilidad:
+Se ejecutó nuevamente el flujo completo con nuevas capturas de telemetría y se verificó que el informe final en `resultados/informe_monitoreo.txt` se actualizó correctamente.
+Se respaldaron los datos de entrada y salida de ambas ejecuciones en:
+- `evidencias/pruebas/ejecucion_1/`
+- `evidencias/pruebas/ejecucion_2/`
 
 
 **Cuestionario:**
+- ¿Por qué es fundamental realizar una limpieza preventiva antes de iniciar el procesamiento?
+Para evitar inconsistencias en los resultados, ya sea porque una ejecución anterior haya generado un informe y la ejecución actual falla a mitad del proceso, ademas tambien alguien podria consultar un informe viejo creyendo que corresponde a la ejecución actual.
+
+- ¿Qué ventaja ofrece evaluar el código de retorno de cada comando frente a permitir que el script continúe tras un error?
+La evaluación estricta mediante códigos de retorno (`set -euo pipefail` y validaciones `if ! comando; then ...`) detiene el flujo si es que ocurre algun error inesperado, impidiendo que errores en cascada corrompan los archivos, ejecuten binarios inexistentes o consuman recursos de forma innecesaria.
+
+- ¿Por qué se debe verificar la integridad estructural de un paquete .tar.gz antes de descomprimirlo?
+Un archivo comprimido puede existir físicamente en disco pero estar corrupto o dañado por una descarga incompleta, por eso es importante que comprobemos la integridad con `tar -tzf`, evitando dejar archivos incompletos en el sistema de archivos.
+
+- ¿Cuál es la importancia de utilizar banderas de rigor (-Wall, -Wextra, -Werror, etc.) en la compilación de programas en C?
+Fuerzan al compilador a tratar advertencias como errores fatales, lo que garantiza que el código cumpla con los estándares del lenguaje (C99/pedantic), prevenga vulnerabilidades comunes como desbordamientos de búfer, variables sin inicializar, pérdidas de memoria o conversiones de tipos implícitas peligrosas.
+
+- ¿Qué señales del sistema se utilizan para suspender, reanudar y terminar un proceso en segundo plano, y cuál es la diferencia entre ellas?
+`SIGSTOP` (19) detiene forzosamente la ejecución del proceso sin terminarlo, congelando su estado de CPU; `SIGCONT` (18) le indica al kernel que vuelva a asignar tiempo de planificación al proceso suspendido para que reanude su ejecución donde se quedó; y `SIGTERM` (15) solicita la terminación controlada y limpia del proceso, permitiéndole liberar recursos antes de salir de la tabla de procesos.
+
+- ¿Por qué es fundamental realizar una limpieza preventiva antes de iniciar el procesamiento?
+Para evitar inconsistencias en los resultados. Si una ejecución previa generó un informe y la ejecución actual falla a mitad del camino (por ejemplo, al compilar o al normalizar), un observador externo podría consultar un informe viejo creyendo que corresponde a la ejecución actual. La limpieza garantiza que solo existan informes si la ejecución concluyó al 100% con éxito.
+
+- ¿Qué ventaja ofrece evaluar el código de retorno de cada comando frente a permitir que el script continúe tras un error?
+La evaluación estricta mediante códigos de retorno (`set -euo pipefail` y validaciones `if ! comando; then ...`) detiene el flujo tan pronto ocurre una anomalía (fail-fast), impidiendo que errores en cascada corrompan archivos, ejecuten binarios inexistentes o consuman recursos de forma innecesaria.
+
+- ¿Por qué se debe verificar la integridad estructural de un paquete .tar.gz antes de descomprimirlo?
+Un archivo comprimido puede existir físicamente en disco pero estar corrupto, truncado o dañado por una descarga incompleta. Comprobar la integridad con `tar -tzf` verifica que la cabecera y el flujo de bloques gzip/tar sean válidos antes de extraer, evitando dejar archivos parciales en el sistema de archivos.
+
+- ¿Cuál es la importancia de utilizar banderas de rigor (-Wall, -Wextra, -Werror, etc.) en la compilación de programas en C?
+Fuerzan al compilador a tratar advertencias como errores fatales, lo que garantiza que el código cumpla con los estándares del lenguaje (C99/pedantic), prevenga vulnerabilidades comunes como desbordamientos de búfer, variables sin inicializar, pérdidas de memoria o conversiones de tipos implícitas peligrosas.
+
+- ¿Qué señales del sistema se utilizan para suspender, reanudar y terminar un proceso en segundo plano, y cuál es la diferencia entre ellas?
+`SIGSTOP` (19) detiene forzosamente la ejecución del proceso sin terminarlo, congelando su estado de CPU; `SIGCONT` (18) le indica al kernel que vuelva a asignar tiempo de planificación al proceso suspendido para que reanude su ejecución donde se quedó; y `SIGTERM` (15) solicita la terminación controlada y limpia del proceso, permitiéndole liberar recursos antes de salir de la tabla de procesos.

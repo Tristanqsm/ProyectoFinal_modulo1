@@ -18,7 +18,11 @@ if [[ -z "$Ocupacion_disco" || ! "$Ocupacion_disco" =~ ^[0-9]+$ ]]; then # Si el
 fi
 
 # Total de procesos de la cuenta del usuario
-Cantidad_procesos=$(ps -u "$USER" --no-headers | wc -l | tr -d ' ')
+if ps -u "$USER" --no-headers >/dev/null 2>&1; then
+    Cantidad_procesos=$(ps -u "$USER" --no-headers | wc -l | tr -d ' ')
+else
+    Cantidad_procesos=$(ps -u "$USER" -o pid= | wc -l | tr -d ' ')
+fi
 if [[ -z "$Cantidad_procesos" || ! "$Cantidad_procesos" =~ ^[0-9]+$ ]]; then
     echo "ERROR: No se pudo obtener la metrica de PROCESOS" >&2
     exit 1
