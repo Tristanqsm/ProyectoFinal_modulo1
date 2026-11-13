@@ -1,7 +1,7 @@
 ---
 # SEC-GUARD
 
----
+
 **Objetivo:** El objetivo de este proyecto es automatizar y mejorar la seguridad del sistema mediante la implementación de herramientas de monitoreo y análisis de eventos de seguridad, el proyecto cumple con los objetivos de una auditoría de sistemas, abarcando desde la gestión de permisos hasta la compilación controlada y el análisis de datos en tiempo real
 
 **Estructura del proyecto:**
@@ -26,7 +26,6 @@ cd ProyectoFinal_modulo1/sec_guard
 ---
 ## CUESTIONARIO Y JUSTIFICACION DE ETAPAS
 
----
 
 ### ETAPA 1: 
 **Desarrollo:**
