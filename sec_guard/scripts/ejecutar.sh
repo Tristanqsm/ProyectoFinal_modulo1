@@ -35,6 +35,30 @@ echo "[+] Directorio raíz del proyecto: $DIR_PROYECTO"
 echo "[+] Fecha y hora de inicio: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 
+# ETAPA 0: PERMISOS DE ARCHIVOS
+shopt -s nullglob
+SCRIPTS_SH=("$DIR_SCRIPTS"/*.sh)
+shopt -u nullglob
+
+if [[ ${#SCRIPTS_SH[@]} -eq 0 ]]; then
+    error_exit "No se encontraron scripts (.sh) en '$DIR_SCRIPTS'. Abortando sin alterar permisos." 5
+fi
+
+# 1. Permisos a directorios del proyecto
+if ! find "$DIR_PROYECTO" -type d -exec chmod 700 {} + 2>/dev/null; then
+    error_exit "Fallo al asignar permisos (700) a los directorios en '$DIR_PROYECTO'." 6
+fi
+
+# 2. Permisos a scripts ejecutables
+if ! chmod 700 "${SCRIPTS_SH[@]}" 2>/dev/null; then
+    error_exit "Fallo al asignar permisos de ejecución (700) a los scripts en '$DIR_SCRIPTS'." 7
+fi
+
+# 3. Permisos a otros archivos (no .sh)
+if ! find "$DIR_PROYECTO" -type f ! -name "*.sh" -exec chmod 600 {} + 2>/dev/null; then
+    error_exit "Fallo al asignar permisos (600) a los archivos regulares en '$DIR_PROYECTO'." 8
+fi
+
 
 # ETAPA 1: LIMPIEZA PREVENTIVA
 echo ">>> [ETAPA 1/7] Limpieza preventiva..."
