@@ -1,6 +1,30 @@
-## CUESTIONARIO DE ETAPAS
+---
+# SEC-GUARD
 
-Este README servira para justificar lo realizado en cada etapa del proyecto al contestar las preguntas de cada etapa:)
+---
+**Objetivo:** El objetivo de este proyecto es automatizar y mejorar la seguridad del sistema mediante la implementación de herramientas de monitoreo y análisis de eventos de seguridad, el proyecto cumple con los objetivos de una auditoría de sistemas, abarcando desde la gestión de permisos hasta la compilación controlada y el análisis de datos en tiempo real
+
+**Estructura del proyecto:**
+- **capturas/:** registros originales.
+- **preparados/:** archivos transformados para su procesamiento.
+- **fuentes/:** programas en lenguaje C.
+- **scripts/:** programas Shell.
+- **resultados/:** informes generados.
+- **evidencias/:** pruebas y documentación.
+
+**Como usar el proyecto:**
+Para utilizar el proyecto es necesario descargarlo y ejecutar el script ejecutar.sh, el cual se encargara de realizar todos los pasos necesarios para la ejecucion del proyecto, asi es, solo con 3 comandos puedes tener a tu auditor personal :D
+Los comandos que debes ejecutar son los siguientes:
+```bash
+# Clonar el repositorios
+git clone https://github.com/Tristanqsm/ProyectoFinal_modulo1.git
+cd ProyectoFinal_modulo1/sec_guard
+
+# Ejecucion del proyecto
+./scripts/ejecutar.sh
+```
+---
+## CUESTIONARIO Y JUSTIFICACION DE ETAPAS
 
 ---
 
